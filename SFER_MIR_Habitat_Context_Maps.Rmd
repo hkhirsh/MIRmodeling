@@ -1,0 +1,980 @@
+---
+title: "SFER & MIR Habitat Context Maps"
+author: "Heidi K. Hirsh"
+date: "`r Sys.Date()`"
+
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: false
+    theme: flatly
+    self_contained: false
+output_dir: "docs"
+output_file: "index.html"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,       # HIDE CODE
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8.4,
+  fig.height = 7.4,
+  dpi = 300,
+  comment = NA 
+)
+
+sf::sf_use_s2(FALSE)
+```
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  GLightbox({ selector: ".glightbox" });
+});
+</script>
+
+
+
+
+<style>
+/* --- Make tabsets vertical (left column) --- */
+.tabset .nav-tabs,
+.tabset .nav-pills {
+  float: left;
+  width: 220px;
+  margin-right: 20px;
+  border-bottom: none;
+}
+
+.tabset .nav-tabs > li,
+.tabset .nav-pills > li {
+  float: none;
+  width: 100%;
+}
+
+.tabset .tab-content {
+  overflow: auto; /* lets content sit to the right of the vertical tabs */
+}
+
+/* Keep the tab content from jumping weirdly */
+.tabset .tab-content > .tab-pane {
+  padding-top: 10px;
+}
+
+/* Optional: slightly smaller tab font */
+.tabset .nav > li > a {
+  padding: 8px 10px;
+}
+</style>
+
+
+## Overview
+
+This report generates **site-specific habitat context maps** for SFER monitoring stations and Mission: Iconic Reefs (MIR) sites in the Florida Keys. For each focal location, benthic habitat polygons, nearby SFER stations, and MIR site boundaries are visualized within a defined spatial context, using consistent symbology and labeling across all map products.
+
+Maps are produced in four batches:
+
+- **Batch A — SFER inshore (regional context)**  
+  Habitat within **50 km** of each inshore SFER station, shown within a **30 km** map context.
+
+- **Batch B — SFER inshore (zoomed)**  
+  Habitat within **25 km** of each inshore SFER station, shown within a **10 km** map context.
+
+- **Batch C1 — MIR sites (local context)**  
+  Habitat within **10 km** of each MIR site centroid, shown within a **5 km** map context.  
+  Focal MIR points are not drawn; site polygons and neighboring features provide spatial context.
+
+- **Batch C2 — MIR sites (expanded context)**  
+  Habitat within **10 km** of each MIR site centroid, shown within a **10 km** map context.
+
+All maps include:
+- Unified Florida Reef Map habitat polygons clipped to the habitat radius
+- Florida Keys shoreline
+- Contextual SFER stations and MIR site polygons
+- A Keys-wide inset map indicating the focal map extent
+
+Outputs are saved to a timestamped run directory under  
+`Outputs_sfer_habitat_maps/`, with figures organized by batch and a combined CSV log summarizing map outputs and feature counts.
+
+
+```{r libraries, include=FALSE}
+suppressPackageStartupMessages({
+  library(sf)
+  library(dplyr)
+  library(DT)
+  library(ggplot2)
+  library(leaflet)
+  library(htmltools)
+  library(readr)
+  library(stringr)
+  library(cowplot)
+  library(ggrepel)
+  library(grid)     # for unit()
+  library(scales)   # for alpha() 
+})
+```
+
+```{r settings, include=FALSE}
+crs_metric <- 32617
+inset_pad_frac <- 0.20
+
+regen_maps <- FALSE   # <- set TRUE only when you want to re-generate PNGs
+
+# Paths
+shore_path <- "data/Florida_Shoreline_(1_to_12%2C000_Scale)/Florida_Shoreline_(1_to_12%2C000_Scale).shp"
+hab_gdb     <- "data/FWC_UnifiedFloridaReefMap_v2.0.gdb"
+hab_layer   <- "UnifiedReefMap"
+sfer_path   <- "data/SFER_station_coordinates.csv"
+mir_path    <- "data/MIR_Shapefiles/Overall Site/MIR Site Polygons.shp"
+
+# SFER columns (match your file)
+sfer_lon_col  <- "lon"
+sfer_lat_col  <- "lat"
+sfer_id_col   <- "SiteID"
+sfer_zone_col <- "Zone"
+inshore_value <- "Inshore"
+
+# --------------------------------------------------
+# Run folder control
+# --------------------------------------------------
+regen_maps <- FALSE   # TRUE = regenerate maps; FALSE = reuse existing PNGs
+
+if (regen_maps) {
+  ts <- format(Sys.time(), "%Y%m%d_%H%M")
+  run_dir <- file.path("Outputs_sfer_habitat_maps", paste0("run_", ts))
+  dir.create(file.path(run_dir, "Figures"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(run_dir, "Tables"),  recursive = TRUE, showWarnings = FALSE)
+} else {
+  # 👇 CHANGE THIS to the run folder that already exists on your machine
+  # run_dir <- "Outputs_sfer_habitat_maps/run_20260205_1356"
+    run_dir <- "docs/Outputs_sfer_habitat_maps/run_SHARE"
+
+
+}
+
+message("Using run directory: ", normalizePath(run_dir, winslash = "/", mustWork = FALSE))
+```
+
+```{r styling, include=FALSE}
+# -----------------------------
+# Styling (points, labels, inset)
+# -----------------------------
+
+# Point styling
+pt_nonfocal_size   <- 2.6
+pt_focal_size      <- 4.2
+pt_stroke          <- 0.9
+pt_nonfocal_fill   <- "black"
+pt_nonfocal_border <- "white"
+pt_focal_fill      <- "blue3"
+pt_focal_border    <- "white"
+
+# Label styling
+label_size_main    <- 6.0   # bigger than before
+label_size_small   <- 5.2
+label_box_alpha    <- 0.55  # semi-transparent label background
+label_pad          <- 0.20
+
+# Inset placement
+inset_x <- 0.70
+inset_y <- 0.06
+inset_w <- 0.24
+inset_h <- 0.24
+
+# Scale bar overlay placement (above inset)
+# (kept, but no longer used)
+scalebar_x <- inset_x
+scalebar_y <- inset_y + inset_h + 0.01
+scalebar_w <- inset_w
+scalebar_h <- 0.06
+```
+
+```{r helper-expand-bbox, include=FALSE}
+expand_bbox <- function(bb, expand_frac = 0.15) {
+  xr <- as.numeric(bb["xmax"] - bb["xmin"])
+  yr <- as.numeric(bb["ymax"] - bb["ymin"])
+  bb["xmin"] <- bb["xmin"] - xr * expand_frac
+  bb["xmax"] <- bb["xmax"] + xr * expand_frac
+  bb["ymin"] <- bb["ymin"] - yr * expand_frac
+  bb["ymax"] <- bb["ymax"] + yr * expand_frac
+  bb
+}
+```
+
+```{r helper-label-df, include=FALSE}
+# -----------------------------
+# Helper: make label df from sf points
+# -----------------------------
+sf_points_to_label_df <- function(x_sf, label_col) {
+  if (is.null(x_sf) || nrow(x_sf) == 0) return(NULL)
+  
+  xy <- sf::st_coordinates(x_sf)
+  
+  out <- x_sf %>%
+    sf::st_drop_geometry() %>%
+    dplyr::mutate(
+      .x   = xy[, 1],
+      .y   = xy[, 2],
+      .lbl = as.character(.data[[label_col]])
+    )
+  
+  out
+}
+
+zone_cols <- c(
+  "Inshore" = "#1f78b4",
+  "Mid"     = "#33a02c",
+  "Offshore"= "#e31a1c"
+)
+```
+
+```{r helper-order, include=FALSE}
+sfer_order <- c("1","EK_IN","5","4","UK_IN","7","10","13","16","19","24")  # <-- your SiteIDs in the order you want
+mir_order  <- c("Carysfort_North","Carysfort_South","Horseshoe","Cheeca","Sombrero","NFH","Looe","EDR")
+
+mir_name_lookup <- c(
+  "EDR" = "Eastern Dry Rocks",
+  "NFH" = "Newfound Harbor"
+)
+
+```
+
+```{r load-data, include=FALSE}
+FLKs1 <- st_read(shore_path, quiet = TRUE)
+coral_sf <- st_read(dsn = hab_gdb, layer = hab_layer, quiet = TRUE)
+
+sfer_df <- read_csv(sfer_path, show_col_types = FALSE)
+stopifnot(all(c(sfer_lon_col, sfer_lat_col, sfer_id_col, sfer_zone_col) %in% names(sfer_df)))
+
+sfer_df[[sfer_lon_col]] <- as.numeric(sfer_df[[sfer_lon_col]])
+sfer_df[[sfer_lat_col]] <- as.numeric(sfer_df[[sfer_lat_col]])
+
+sfer_sf <- st_as_sf(
+  sfer_df,
+  coords = c(sfer_lon_col, sfer_lat_col),
+  crs = 4326,
+  remove = FALSE
+)
+
+mir_sf <- NULL
+if (file.exists(mir_path)) {
+  mir_sf <- st_read(mir_path, quiet = TRUE) %>% st_make_valid()
+} else {
+  message("MIR shapefile not found; MIR loop will be skipped: ", mir_path)
+}
+```
+
+```{r habitat-palette, include=FALSE}
+habs1 <- c(
+  "Aggregate Reef","Individual or Aggregated Patch Reef",
+  "Reef Rubble","Ridge",
+  "Pavement",
+  "Scattered Coral/Rock in Unconsolidated Sediment","Unconsolidated Sediment",
+  "Seagrass (Continuous)","Seagrass (Discontinuous)",
+  "Mangrove",
+  "Land","Artificial","Dredged/Excavated",
+  "Not Classified"
+)
+
+class1_colors <- c(
+  "maroon1","red",
+  "blueviolet","mediumturquoise",
+  "steelblue1",
+  "coral","khaki",
+  "darkgreen","forestgreen",
+  "saddlebrown",
+  "gray50","gray50","navyblue",
+  "white"
+)
+
+hab_cols <- setNames(class1_colors, habs1)
+
+class1_FILL_scale <- scale_fill_manual(
+  name   = "Class 1 Habitat",
+  values = hab_cols,
+  breaks = habs1,
+  labels = habs1,
+  drop   = FALSE
+)
+```
+
+```{r transforms-and-inset, include=FALSE}
+FLKs1_ll <- st_transform(FLKs1, 4326)
+coral_ll <- st_transform(st_make_valid(coral_sf), 4326)
+
+sfer_all_ll <- st_transform(sfer_sf, 4326)
+sfer_all_m  <- st_transform(sfer_sf, crs_metric)
+
+sfer_in <- sfer_sf %>%
+  filter(str_trim(str_to_lower(.data[[sfer_zone_col]])) == str_to_lower(inshore_value))
+if (nrow(sfer_in) == 0) stop("No inshore SFER stations found.")
+
+sfer_in_m <- st_transform(sfer_in, crs_metric)
+
+mir_all_ll <- if (!is.null(mir_sf)) st_transform(mir_sf, 4326) else NULL
+mir_all_m  <- if (!is.null(mir_sf)) st_transform(mir_sf, crs_metric) else NULL
+
+bb_inset <- st_bbox(sfer_all_ll)
+if (!is.null(mir_all_ll)) {
+  bb_mir <- st_bbox(mir_all_ll)
+  bb_inset["xmin"] <- min(bb_inset["xmin"], bb_mir["xmin"])
+  bb_inset["ymin"] <- min(bb_inset["ymin"], bb_mir["ymin"])
+  bb_inset["xmax"] <- max(bb_inset["xmax"], bb_mir["xmax"])
+  bb_inset["ymax"] <- max(bb_inset["ymax"], bb_mir["ymax"])
+}
+bb_inset <- expand_bbox(bb_inset, inset_pad_frac)
+
+FLKs1_inset <- st_crop(FLKs1_ll, bb_inset)
+mir_inset   <- if (!is.null(mir_all_ll)) st_crop(mir_all_ll, bb_inset) else NULL
+
+p_inset_base <- ggplot() +
+  geom_sf(data = FLKs1_inset, fill = "gray50", color = NA) +
+  { if (!is.null(mir_inset)) geom_sf(data = mir_inset, fill = NA, color = "orange", linewidth = 0.25, alpha = 0.8) else NULL } +
+  geom_sf(data = sfer_all_ll, color = "black", size = 0.55, alpha = 0.6) +
+  coord_sf(
+    xlim = c(bb_inset["xmin"], bb_inset["xmax"]),
+    ylim = c(bb_inset["ymin"], bb_inset["ymax"]),
+    expand = FALSE
+  ) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "white", color = "gray40", linewidth = 0.2))
+```
+
+## Reference Map
+```{r reference-map-static, echo=FALSE, results='asis'}
+# ============================
+# Reference Map (STATIC, Keys-only)
+# - ALWAYS regenerates (no caching)
+# - Default ggplot colors by Zone column
+# - SFER labels small + black inside points (no leader lines)
+# - MIR polygons thin black outline
+# - MIR labels allowed to have leader lines + pushed farther away
+# ============================
+
+# Output image path (overwrites every knit)
+ref_png <- file.path(run_dir, "Figures", "reference_map_static_keys.png")
+
+# ----------------------------
+# 1) Build Keys-only extent from data (SFER + MIR)
+# ----------------------------
+bb_keys <- sf::st_bbox(sfer_all_ll)
+
+if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) {
+  bb_m <- sf::st_bbox(mir_all_ll)
+  bb_keys["xmin"] <- min(bb_keys["xmin"], bb_m["xmin"])
+  bb_keys["ymin"] <- min(bb_keys["ymin"], bb_m["ymin"])
+  bb_keys["xmax"] <- max(bb_keys["xmax"], bb_m["xmax"])
+  bb_keys["ymax"] <- max(bb_keys["ymax"], bb_m["ymax"])
+}
+
+# Pad the bbox a bit so labels have room (simple + stable; no NA bbox math)
+pad_x <- as.numeric(bb_keys["xmax"] - bb_keys["xmin"]) * 0.10
+pad_y <- as.numeric(bb_keys["ymax"] - bb_keys["ymin"]) * 0.15
+bb_keys["xmin"] <- bb_keys["xmin"] - pad_x
+bb_keys["xmax"] <- bb_keys["xmax"] + pad_x
+bb_keys["ymin"] <- bb_keys["ymin"] - pad_y
+bb_keys["ymax"] <- bb_keys["ymax"] + pad_y
+
+# Crop geometry using bbox (robust way)
+bb_sfc <- sf::st_as_sfc(bb_keys)
+
+FLKs_keys <- sf::st_crop(FLKs1_ll, bb_sfc)
+sfer_keys <- sf::st_crop(sfer_all_ll, bb_sfc)
+mir_keys  <- if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) sf::st_crop(mir_all_ll, bb_sfc) else NULL
+
+# ----------------------------
+# 2) MIR label positions (for polygons)
+# ----------------------------
+mir_lab_df <- NULL
+if (!is.null(mir_keys) && nrow(mir_keys) > 0 && "MIRSite" %in% names(mir_keys)) {
+  mir_pts <- sf::st_point_on_surface(mir_keys)
+  mir_lab_df <- sf_points_to_label_df(mir_pts, "MIRSite")
+}
+
+# ----------------------------
+# 3) Plot
+# ----------------------------
+p_ref <- ggplot() +
+
+  # Shoreline
+  geom_sf(
+    data = FLKs_keys,
+    fill = "gray85",
+    color = NA
+  ) +
+
+  # MIR polygons — thin outline
+  { if (!is.null(mir_keys) && nrow(mir_keys) > 0)
+    geom_sf(
+      data = mir_keys,
+      fill = NA,
+      color = "black",
+      linewidth = 0.25,
+      alpha = 0.9
+    )
+    else NULL } +
+
+  # MIR labels — leader lines OK, pushed farther away
+  { if (!is.null(mir_lab_df) && nrow(mir_lab_df) > 0)
+    ggrepel::geom_label_repel(
+      data = mir_lab_df,
+      aes(x = .x, y = .y, label = .lbl),
+      size = 3.2 / ggplot2::.pt,
+      fontface = "bold",
+      label.size = 0,
+      fill = scales::alpha("white", 0.70),
+      box.padding = 0.7,
+      point.padding = 0.6,
+      force = 2.5,
+      min.segment.length = 0,
+      segment.size = 0.25,
+      max.overlaps = Inf
+    )
+    else NULL } +
+
+  # SFER points — default ggplot colors by Zone (no manual palette)
+  geom_sf(
+    data = sfer_keys,
+    aes(fill = .data[[sfer_zone_col]]),
+    shape = 21,
+    color = "white",
+    stroke = 0.6,
+    size = 4.0,
+    alpha = 0.95
+  ) +
+
+  # SFER labels — small, black, inside points (no leader lines)
+  geom_sf_text(
+    data = sfer_keys,
+    aes(label = .data[[sfer_id_col]]),
+    color = "black",
+    size = 1.8,
+    fontface = "plain"
+  ) +
+
+  coord_sf(
+    xlim = c(bb_keys["xmin"], bb_keys["xmax"]),
+    ylim = c(bb_keys["ymin"], bb_keys["ymax"]),
+    expand = FALSE
+  ) +
+
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 9)
+  ) +
+  labs(
+    fill  = "SFER Zone",
+    title = "SFER stations and MIR sites — Florida Keys"
+  )
+
+# ALWAYS save (overwrite)
+ggsave(ref_png, p_ref, width = 9.5, height = 6.5, dpi = 300)
+
+# Display with click-to-zoom
+cat(sprintf(
+  "<a href='%s' class='glightbox' data-gallery='reference'>
+     <img src='%s' style='width:100%%; max-width:1100px; height:auto;
+          border:1px solid #ddd; border-radius:6px;'/>
+   </a>",
+  ref_png, ref_png
+))
+
+
+```
+
+```{r make-maps-function, include=FALSE}
+make_maps <- function(
+    focal_ll, focal_m, focal_id_vec,
+    id_name = "ID",
+    out_subdir = "Batch",
+    hab_km = 40, context_km = 30,
+    include_inset = TRUE,
+    force_single_point_per_id = TRUE,
+    label_sfer_points = TRUE,
+    label_mir_sites   = TRUE,
+    mir_name_field    = "MIRSite",
+    draw_focal_point  = TRUE 
+) {
+  
+  fig_dir <- file.path(run_dir, "Figures", out_subdir)
+  dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  hab_m <- hab_km * 1000
+  ctx_m <- context_km * 1000
+  
+  # Preclip habitat to union of buffers sized to max(hab, ctx)
+  preclip_m <- max(hab_m, ctx_m)
+  buf_union_pre <- st_union(st_buffer(focal_m, dist = preclip_m))
+  coral_pre_m <- st_transform(coral_ll, crs_metric) %>% st_intersection(buf_union_pre)
+  
+  out_log <- list()
+  
+  for (sid in focal_id_vec) {
+    
+    message("[", out_subdir, "] focal ", id_name, ": ", sid)
+    
+    pt_ll <- focal_ll %>% filter(.data[[id_name]] == sid)
+    pt_m  <- focal_m  %>% filter(.data[[id_name]] == sid)
+    
+    if (force_single_point_per_id && nrow(pt_m) > 1) {
+      pt_m  <- pt_m  %>% slice(1)
+      pt_ll <- pt_ll %>% slice(1)
+    }
+    
+    pt_u_m <- st_union(pt_m)
+    
+    buf_ctx_m <- st_buffer(pt_u_m, dist = ctx_m)
+    buf_hab_m <- st_buffer(pt_u_m, dist = hab_m)
+    
+    buf_ctx_ll <- st_transform(buf_ctx_m, 4326)
+    buf_hab_ll <- st_transform(buf_hab_m, 4326)
+    
+    coral_clip_ll <- st_intersection(st_transform(coral_pre_m, 4326), buf_hab_ll)
+    
+    # context SFER
+    sfer_ctx_m  <- sfer_all_m[st_intersects(sfer_all_m, buf_ctx_m, sparse = FALSE), ]
+    sfer_ctx_ll <- st_transform(sfer_ctx_m, 4326)
+    
+    # drop focal from "context" so it can't be drawn/labeled twice
+    sfer_ctx_ll_nonfocal <- sfer_ctx_ll %>%
+      filter(.data[[sfer_id_col]] != sid)
+    
+    # MIR context
+    mir_ctx_ll <- NULL
+    n_mir <- NA_integer_
+    if (!is.null(mir_all_m)) {
+      mir_ctx_m <- mir_all_m[st_intersects(mir_all_m, buf_ctx_m, sparse = FALSE), ]
+      n_mir <- nrow(mir_ctx_m)
+      if (n_mir > 0) mir_ctx_ll <- st_transform(mir_ctx_m, 4326)
+    }
+    
+    # If focal IDs are MIRSite names, drop focal MIR polygon from ctx labels to prevent duplicates
+    mir_ctx_ll_nonfocal <- mir_ctx_ll
+    if (!is.null(mir_ctx_ll) && mir_name_field %in% names(mir_ctx_ll)) {
+      mir_ctx_ll_nonfocal <- mir_ctx_ll %>% filter(.data[[mir_name_field]] != sid)
+    }
+    
+    # bbox extent = context buffer
+    bb_main <- st_bbox(buf_ctx_ll)
+    bb_rect <- st_as_sfc(bb_main) %>% st_sf(geometry = ., crs = 4326)
+    
+    # Label dfs
+    sfer_lab_df_nonfocal <- if (label_sfer_points) sf_points_to_label_df(sfer_ctx_ll_nonfocal, sfer_id_col) else NULL
+    sfer_lab_df_focal    <- if (label_sfer_points) sf_points_to_label_df(pt_ll %>% mutate(tmpID = sid), "tmpID") else NULL
+    
+    mir_lab_df_nonfocal  <- NULL
+    if (label_mir_sites && !is.null(mir_ctx_ll_nonfocal) && nrow(mir_ctx_ll_nonfocal) > 0 && mir_name_field %in% names(mir_ctx_ll_nonfocal)) {
+      mir_pts <- st_point_on_surface(mir_ctx_ll_nonfocal)
+      mir_lab_df_nonfocal <- sf_points_to_label_df(mir_pts, mir_name_field)
+    }
+    
+    # ---- Title prefix (MUST be defined outside ggplot chain) ----
+    title_prefix <- if (grepl("^[0-9]+$", as.character(sid))) "Site " else "MIR "
+    
+    # MAIN plot
+    p_main <- ggplot(data = FLKs1_ll) +
+      { if (nrow(coral_clip_ll) > 0)
+        geom_sf(data = coral_clip_ll, aes(fill = ClassLv1), linewidth = 0, alpha = 0.7)
+        else NULL } +
+      geom_sf(fill = "gray50", linewidth = 0) +
+      
+      # MIR polygons (context)
+      { if (!is.null(mir_ctx_ll) && nrow(mir_ctx_ll) > 0)
+        geom_sf(data = mir_ctx_ll, fill = NA, color = "black", linewidth = 0.6, alpha = 0.9)
+        else NULL } +
+      
+      # SFER points (context non-focal)
+      geom_sf(
+        data = sfer_ctx_ll_nonfocal,
+        shape = 21, fill = pt_nonfocal_fill, color = pt_nonfocal_border,
+        size = pt_nonfocal_size, stroke = pt_stroke, alpha = 0.95
+      ) +
+
+      
+      { if (draw_focal_point)
+        geom_sf(
+          data = pt_ll,
+          shape = 21, fill = pt_focal_fill, color = pt_focal_border,
+          size = pt_focal_size, stroke = pt_stroke, alpha = 1
+        )
+        else NULL }+
+      
+      # Labels: SFER non-focal
+      { if (!is.null(sfer_lab_df_nonfocal) && nrow(sfer_lab_df_nonfocal) > 0)
+        geom_label_repel(
+          data = sfer_lab_df_nonfocal,
+          aes(x = .x, y = .y, label = .lbl),
+          size = label_size_small / ggplot2::.pt,
+          label.size = 0,
+          fill = scales::alpha("white", label_box_alpha),
+          label.padding = unit(label_pad, "lines"),
+          min.segment.length = 0,
+          segment.size = 0.25,
+          max.overlaps = 50
+        )
+        else NULL } +
+      
+      # Label: focal (ONLY ONCE)
+      { if (!is.null(sfer_lab_df_focal) && nrow(sfer_lab_df_focal) > 0)
+        geom_label_repel(
+          data = sfer_lab_df_focal,
+          aes(x = .x, y = .y, label = .lbl),
+          fontface = "bold",
+          size = label_size_main / ggplot2::.pt,
+          label.size = 0,
+          fill = scales::alpha("white", label_box_alpha),
+          label.padding = unit(label_pad, "lines"),
+          min.segment.length = 0,
+          segment.size = 0.35,
+          max.overlaps = Inf
+        )
+        else NULL } +
+      
+      # Labels: MIR non-focal polygons
+      { if (!is.null(mir_lab_df_nonfocal) && nrow(mir_lab_df_nonfocal) > 0)
+        geom_label_repel(
+          data = mir_lab_df_nonfocal,
+          aes(x = .x, y = .y, label = .lbl),
+          fontface = "bold",
+          size = label_size_small / ggplot2::.pt,
+          label.size = 0,
+          fill = scales::alpha("white", label_box_alpha),
+          label.padding = unit(label_pad, "lines"),
+          min.segment.length = 0,
+          segment.size = 0.25,
+          max.overlaps = Inf
+        )
+        else NULL } +
+      
+      class1_FILL_scale +
+      coord_sf(
+        xlim = c(bb_main["xmin"], bb_main["xmax"]),
+        ylim = c(bb_main["ymin"], bb_main["ymax"]),
+        expand = FALSE
+      ) +
+      theme_bw() +
+      theme(
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text  = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        legend.position = "right",
+        legend.title = element_text(size = 10),
+        legend.text  = element_text(size = 9)
+      ) +
+      xlab("Longitude") + ylab("Latitude") +
+      # ggtitle(paste0(as.character(sid), " (context ", context_km, " km)"))
+      ggtitle(paste0(title_prefix, as.character(sid), " (scale ", context_km, " km)"))
+    
+    
+    
+    # Inset (scale bar overlay REMOVED)
+    if (include_inset) {
+      
+      p_inset <- p_inset_base +
+        geom_sf(data = bb_rect, fill = NA, color = "red", linewidth = 0.6) +
+        { if (draw_focal_point)
+          geom_sf(
+            data = pt_ll,
+            shape = 21, fill = pt_focal_fill, color = pt_focal_border,
+            size = 2.2, stroke = 0.8
+          )
+          else NULL }
+      
+      p <- ggdraw() +
+        draw_plot(p_main, 0, 0, 1, 1) +
+        # draw_plot(p_scale, x = scalebar_x, y = scalebar_y, width = scalebar_w, height = scalebar_h) +  # REMOVED
+        draw_plot(p_inset, x = inset_x, y = inset_y, width = inset_w, height = inset_h)
+      
+    } else {
+      p <- p_main
+    }
+    
+    safe_id <- str_replace_all(as.character(sid), "[^A-Za-z0-9]+", "_")
+    out_png <- file.path(fig_dir, paste0(out_subdir, "_hab", hab_km, "km_ctx", context_km, "km_", safe_id, ".png"))
+    
+    ggsave(out_png,p,width = 8.4,height = 7.4,dpi = 300,create.dir = TRUE)
+    
+    out_log[[length(out_log) + 1]] <- data.frame(
+      batch = out_subdir,
+      focal_id = as.character(sid),
+      hab_km = hab_km,
+      context_km = context_km,
+      n_hab_polys = nrow(coral_clip_ll),
+      n_sfer_in_context = nrow(sfer_ctx_ll),
+      n_mir_in_context = n_mir,
+      file = out_png
+    )
+  }
+  
+  bind_rows(out_log)
+}
+```
+
+```{r run-batches, include=FALSE, eval=regen_maps, message=TRUE}
+# -----------------------------
+# 6) Batch A: SFER inshore
+# -----------------------------
+sfer_focal_ll <- sfer_in %>% mutate(ID = .data[[sfer_id_col]])
+sfer_focal_m  <- sfer_in_m %>% mutate(ID = .data[[sfer_id_col]])
+sfer_ids <- unique(sfer_focal_ll$ID)
+
+log_A <- make_maps(
+  focal_ll = sfer_focal_ll, focal_m = sfer_focal_m, focal_id_vec = sfer_ids,
+  id_name = "ID",
+  out_subdir = "SFER_context30_hab50",
+  hab_km = 50, context_km = 30,
+  include_inset = TRUE,
+  label_sfer_points = TRUE,
+  label_mir_sites   = TRUE,
+  mir_name_field    = "MIRSite",
+  draw_focal_point  = TRUE
+)
+
+# -----------------------------
+# 7) Batch B: SFER inshore ZOOM
+# -----------------------------
+log_B <- make_maps(
+  focal_ll = sfer_focal_ll, focal_m = sfer_focal_m, focal_id_vec = sfer_ids,
+  id_name = "ID",
+  out_subdir = "SFER_context10_hab25_zoom",
+  hab_km = 25, context_km = 10,
+  include_inset = TRUE,
+  label_sfer_points = TRUE,
+  label_mir_sites   = TRUE,
+  mir_name_field    = "MIRSite",
+  draw_focal_point  = TRUE
+)
+
+# -----------------------------
+# 8) Batch C: MIR sites (use mir_sf$MIRSite)
+# -----------------------------
+log_C  <- NULL
+log_C2 <- NULL
+
+if (!is.null(mir_sf)) {
+
+  if (!("MIRSite" %in% names(mir_sf))) {
+    stop("Expected mir_sf$MIRSite but did not find column 'MIRSite' in MIR shapefile.")
+  }
+
+  mir_m <- st_transform(mir_sf, crs_metric)
+  mir_pts_m <- st_point_on_surface(mir_m) %>% st_sf() %>%
+    mutate(ID = as.character(.data[["MIRSite"]]))
+
+  mir_pts_ll <- st_transform(mir_pts_m, 4326)
+  mir_ids <- unique(mir_pts_ll$ID)
+
+  # C1
+  log_C <- make_maps(
+    focal_ll = mir_pts_ll, focal_m = mir_pts_m, focal_id_vec = mir_ids,
+    id_name = "ID",
+    out_subdir = "MIR_context5_hab10",
+    hab_km = 10, context_km = 5,
+    include_inset = TRUE,
+    label_sfer_points = TRUE,
+    label_mir_sites   = TRUE,
+    mir_name_field    = "MIRSite",
+    draw_focal_point  = FALSE
+  )
+
+  # C2
+  log_C2 <- make_maps(
+    focal_ll = mir_pts_ll, focal_m = mir_pts_m, focal_id_vec = mir_ids,
+    id_name = "ID",
+    out_subdir = "MIR_context10_hab10",
+    hab_km = 20, context_km = 10,
+    include_inset = TRUE,
+    label_sfer_points = TRUE,
+    label_mir_sites   = TRUE,
+    mir_name_field    = "MIRSite",
+    draw_focal_point  = FALSE
+  )
+}
+
+# -----------------------------
+# 9) Write combined log
+# -----------------------------
+log_all <- dplyr::bind_rows(log_A, log_B, log_C, log_C2)
+readr::write_csv(log_all, file.path(run_dir, "Tables", "map_outputs_log.csv"))
+
+message("Done. Outputs saved to: ", normalizePath(run_dir, winslash = "/", mustWork = FALSE))
+```
+
+
+```{r map-output-helpers, echo=FALSE, include=FALSE}
+# ---- helpers ----
+
+# Extract "ctx##km" and turn into "scale ## km"
+extract_scale_from_filename <- function(fn) {
+  m <- regexpr("_ctx[0-9]+km_", fn)
+  if (m[1] == -1) return(NA_character_)
+  hit <- regmatches(fn, m)            # like "_ctx30km_"
+  km  <- gsub("[^0-9]", "", hit)
+  paste0("scale ", km, " km")
+}
+
+# Clean filename -> title (SFER)
+# NOTE: no "SFER" prefix here
+sfer_title_fun <- function(fn) {
+  site_id <- gsub(".*_ctx[0-9]+km_([^/]+)\\.png$", "\\1", fn)
+  sc <- extract_scale_from_filename(fn)
+  if (!is.na(sc)) paste0(site_id, " (", sc, ")") else site_id
+}
+
+# Clean filename -> title (MIR)
+# NOTE: no "MIR Site:" prefix here
+mir_title_fun <- function(fn) {
+  mir_site <- gsub(".*_ctx[0-9]+km_([^/]+)\\.png$", "\\1", fn)
+  mir_site <- gsub("_", " ", mir_site)
+
+  # replace short codes with full names
+  for (abbr in names(mir_name_lookup)) {
+    mir_site <- gsub(
+      paste0("\\b", abbr, "\\b"),
+      mir_name_lookup[[abbr]],
+      mir_site
+    )
+  }
+
+  sc <- extract_scale_from_filename(fn)
+  if (!is.na(sc)) paste0(mir_site, " (", sc, ")") else mir_site
+}
+
+
+# Render all PNGs in a folder as a list (click-to-zoom via GLightbox)
+render_map_list <- function(subdir, title_fun, gallery_id = "maps", order_vec = NULL) {
+  if (!dir.exists(subdir)) {
+    cat(sprintf("<p><em>Folder not found:</em> %s</p>", subdir))
+    return(invisible(NULL))
+  }
+
+  pngs <- list.files(subdir, pattern="\\.png$", full.names=FALSE)
+  if (length(pngs) == 0) {
+    cat("<p><em>No maps found.</em></p>")
+    return(invisible(NULL))
+  }
+
+  # ---- ORDER CONTROL ----
+  if (!is.null(order_vec)) {
+    # extract ID part from filename: everything after _ctx##km_ and before .png
+    ids <- gsub(".*_ctx[0-9]+km_([^/]+)\\.png$", "\\1", pngs)
+
+    ord <- match(ids, order_vec)                # desired positions
+    ord[is.na(ord)] <- 1e9 + seq_len(sum(is.na(ord)))  # shove unknowns to end, keep stable
+    pngs <- pngs[order(ord, ids)]
+  } else {
+    pngs <- sort(pngs)
+  }
+
+  for (fn in pngs) {
+    rel   <- file.path(subdir, fn)
+    title <- title_fun(fn)
+
+    cat(sprintf("<h4 class='toc-ignore'>%s</h4>\n", title))
+    cat(sprintf(
+      "<a href='%s' class='glightbox' data-gallery='%s'>
+         <img src='%s' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+       </a>\n",
+      rel, gallery_id, rel
+    ))
+    cat("<hr/>\n")
+  }
+
+  invisible(NULL)
+}
+```
+
+
+
+## Map Outputs
+<details><summary><strong>SFER — scale 30 km (`r length(list.files(file.path(run_dir,"Figures","SFER_context30_hab50"), pattern="\\.png$"))` maps)</strong></summary>
+```{r, echo=FALSE, results='asis', comment=NA}
+subdir <- file.path(run_dir, "Figures", "SFER_context30_hab50")
+render_map_list(subdir, sfer_title_fun, gallery_id = "sfer30", order_vec = sfer_order)
+```
+</details>
+
+<details><summary><strong>SFER — scale 10 km (`r length(list.files(file.path(run_dir,"Figures","SFER_context10_hab25_zoom"), pattern="\\.png$"))` maps)</strong></summary>
+```{r, echo=FALSE, results='asis', comment=NA}
+subdir <- file.path(run_dir, "Figures", "SFER_context10_hab25_zoom")
+render_map_list(subdir, sfer_title_fun, gallery_id = "sfer10", order_vec = sfer_order)
+```
+</details>
+
+<details><summary><strong>MIR — scale 10 km (`r length(list.files(file.path(run_dir,"Figures","MIR_context10_hab10"), pattern="\\.png$"))` maps)</strong></summary>
+```{r, echo=FALSE, results='asis', comment=NA}
+subdir <- file.path(run_dir, "Figures", "MIR_context10_hab10")
+render_map_list(subdir, mir_title_fun, gallery_id = "mir10", order_vec = mir_order)
+```
+</details>
+
+<details><summary><strong>MIR — scale 5 km (`r length(list.files(file.path(run_dir,"Figures","MIR_context5_hab10"), pattern="\\.png$"))` maps)</strong></summary>
+```{r, echo=FALSE, results='asis', comment=NA}
+subdir <- file.path(run_dir, "Figures", "MIR_context5_hab10")
+render_map_list(subdir, mir_title_fun, gallery_id = "mir5", order_vec = mir_order)
+```
+</details>
+
+
+## Proximity to SFER 
+```{r mir-nearest-table-dt, echo=FALSE, results='asis'}
+# nearest_tbl_path <- "/Users/heidi.k.hirsh/Desktop/MIRmodeling/tables/MIR_nearest4_SFER_20260208_081529.csv"
+# nearest_tbl_path <- file.path("tables", "MIR_nearest4_SFER_20260208_081529.csv")
+nearest_tbl_path <- file.path(run_dir, "Tables", "MIR_nearest4_SFER_20260208_081529.csv")
+
+
+# cat("<p><b>Nearest-table file exists?</b> ", file.exists(nearest_tbl_path), "</p>")
+# cat("<p><b>Working dir:</b> ", getwd(), "</p>")
+
+cat("<h3>Closest SFER sites to each MIR site</h3>")
+
+if (!file.exists(nearest_tbl_path)) {
+  cat("<p><b>File not found:</b> ", nearest_tbl_path, "</p>", sep = "")
+} else {
+
+  nearest_tbl <- readr::read_csv(nearest_tbl_path, show_col_types = FALSE)
+
+  # round dist_km if it exists
+  if ("dist_km" %in% names(nearest_tbl)) {
+    nearest_tbl <- dplyr::mutate(nearest_tbl, dist_km = round(dist_km, 2))
+  }
+
+  DT::datatable(
+    nearest_tbl,
+    rownames = FALSE,
+    filter = "top",
+    options = list(
+      pageLength = 12,
+      scrollX = TRUE,
+      initComplete = DT::JS(
+        "function(){",
+        "  var api = this.api();",
+        "  var col = 0; // first column = MIR site",
+        "  var cell = $(api.table().header()).find('tr:eq(1) th').eq(col);",
+        "  cell.empty();",
+        "  var select = $('<select style=\"width: 100%\"><option value=\"\">Select MIR site…</option></select>')",
+        "    .appendTo(cell)",
+        "    .on('change', function(){",
+        "      var v = $.fn.dataTable.util.escapeRegex($(this).val());",
+        "      api.column(col).search(v ? '^'+v+'$' : '', true, false).draw();",
+        "    });",
+        "  api.column(col).data().unique().sort().each(function(d){",
+        "    select.append('<option value=\"'+d+'\">'+d+'</option>');",
+        "  });",
+        "  // default: show the first MIR site only",
+        "  var first = api.column(col).data()[0];",
+        "  if(first !== undefined){ select.val(first).trigger('change'); }",
+        "}"
+      )
+    ),
+    caption = htmltools::tags$caption("Use the dropdown to view one MIR site at a time.")
+  )
+}
+```
+

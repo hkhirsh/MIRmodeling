@@ -1,0 +1,16 @@
+
+# Ignore archive
+archive/
+
+# Ignore mac junk
+.DS_Store
+
+# Ignore old rendered html at root
+SFER_MIR_Habitat_Context_Maps.html
+SFER_MIR_Habitat_Context_Maps_files/
+
+# Ignore extra folders
+outputs/
+figures/
+tables/
+

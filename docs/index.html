@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Heidi K. Hirsh" />
+
+<meta name="date" content="2026-02-11" />
+
+<title>SFER &amp; MIR Habitat Context Maps</title>
+
+<script src="index_files/header-attrs-2.30/header-attrs.js"></script>
+<script src="index_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="index_files/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="index_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="index_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="index_files/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="index_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="index_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="index_files/navigation-1.1/tabsets.js"></script>
+<link href="index_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="index_files/highlightjs-9.12.0/highlight.js"></script>
+<link href="index_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+<script src="index_files/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="index_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="index_files/datatables-binding-0.34.0/datatables.js"></script>
+<link href="index_files/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="index_files/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="index_files/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<link href="index_files/nouislider-7.0.10/jquery.nouislider.min.css" rel="stylesheet" />
+<script src="index_files/nouislider-7.0.10/jquery.nouislider.min.js"></script>
+<link href="index_files/selectize-0.12.0/selectize.bootstrap3.css" rel="stylesheet" />
+<script src="index_files/selectize-0.12.0/selectize.min.js"></script>
+<link href="index_files/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet" />
+<script src="index_files/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">SFER &amp; MIR Habitat Context Maps</h1>
+<h4 class="author">Heidi K. Hirsh</h4>
+<h4 class="date">2026-02-11</h4>
+
+</div>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  GLightbox({ selector: ".glightbox" });
+});
+</script>
+<style>
+/* --- Make tabsets vertical (left column) --- */
+.tabset .nav-tabs,
+.tabset .nav-pills {
+  float: left;
+  width: 220px;
+  margin-right: 20px;
+  border-bottom: none;
+}
+
+.tabset .nav-tabs > li,
+.tabset .nav-pills > li {
+  float: none;
+  width: 100%;
+}
+
+.tabset .tab-content {
+  overflow: auto; /* lets content sit to the right of the vertical tabs */
+}
+
+/* Keep the tab content from jumping weirdly */
+.tabset .tab-content > .tab-pane {
+  padding-top: 10px;
+}
+
+/* Optional: slightly smaller tab font */
+.tabset .nav > li > a {
+  padding: 8px 10px;
+}
+</style>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>This report generates <strong>site-specific habitat context
+maps</strong> for SFER monitoring stations and Mission: Iconic Reefs
+(MIR) sites in the Florida Keys. For each focal location, benthic
+habitat polygons, nearby SFER stations, and MIR site boundaries are
+visualized within a defined spatial context, using consistent symbology
+and labeling across all map products.</p>
+<p>Maps are produced in four batches:</p>
+<ul>
+<li><p><strong>Batch A — SFER inshore (regional context)</strong><br />
+Habitat within <strong>50 km</strong> of each inshore SFER station,
+shown within a <strong>30 km</strong> map context.</p></li>
+<li><p><strong>Batch B — SFER inshore (zoomed)</strong><br />
+Habitat within <strong>25 km</strong> of each inshore SFER station,
+shown within a <strong>10 km</strong> map context.</p></li>
+<li><p><strong>Batch C1 — MIR sites (local context)</strong><br />
+Habitat within <strong>10 km</strong> of each MIR site centroid, shown
+within a <strong>5 km</strong> map context.<br />
+Focal MIR points are not drawn; site polygons and neighboring features
+provide spatial context.</p></li>
+<li><p><strong>Batch C2 — MIR sites (expanded context)</strong><br />
+Habitat within <strong>10 km</strong> of each MIR site centroid, shown
+within a <strong>10 km</strong> map context.</p></li>
+</ul>
+<p>All maps include: - Unified Florida Reef Map habitat polygons clipped
+to the habitat radius - Florida Keys shoreline - Contextual SFER
+stations and MIR site polygons - A Keys-wide inset map indicating the
+focal map extent</p>
+<p>Outputs are saved to a timestamped run directory under<br />
+<code>Outputs_sfer_habitat_maps/</code>, with figures organized by batch
+and a combined CSV log summarizing map outputs and feature counts.</p>
+</div>
+<div id="reference-map" class="section level2">
+<h2>Reference Map</h2>
+<p><a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/reference_map_static_keys.png' class='glightbox' data-gallery='reference'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/reference_map_static_keys.png' style='width:100%; max-width:1100px; height:auto;
+          border:1px solid #ddd; border-radius:6px;'/> </a></p>
+</div>
+<div id="map-outputs" class="section level2">
+<h2>Map Outputs</h2>
+<details>
+<summary>
+<strong>SFER — scale 30 km (11 maps)</strong>
+</summary>
+<h4 class="toc-ignore">
+1 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_1.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_1.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+EK_IN (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_EK_IN.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_EK_IN.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+5 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_5.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_5.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+4 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_4.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_4.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+UK_IN (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_UK_IN.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_UK_IN.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+7 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_7.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_7.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+10 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_10.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_10.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+13 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_13.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_13.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+16 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_16.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_16.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+19 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_19.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_19.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+24 (scale 30 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_24.png' class='glightbox' data-gallery='sfer30'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context30_hab50/SFER_context30_hab50_hab50km_ctx30km_24.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+</details>
+<details>
+<summary>
+<strong>SFER — scale 10 km (11 maps)</strong>
+</summary>
+<h4 class="toc-ignore">
+1 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_1.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_1.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+EK_IN (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_EK_IN.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_EK_IN.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+5 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_5.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_5.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+4 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_4.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_4.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+UK_IN (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_UK_IN.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_UK_IN.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+7 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_7.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_7.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+10 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_10.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_10.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+13 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_13.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_13.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+16 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_16.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_16.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+19 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_19.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_19.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+24 (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_24.png' class='glightbox' data-gallery='sfer10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/SFER_context10_hab25_zoom/SFER_context10_hab25_zoom_hab25km_ctx10km_24.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+</details>
+<details>
+<summary>
+<strong>MIR — scale 10 km (8 maps)</strong>
+</summary>
+<h4 class="toc-ignore">
+Carysfort North (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Carysfort_North.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Carysfort_North.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Carysfort South (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Carysfort_South.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Carysfort_South.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Horseshoe (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Horseshoe.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Horseshoe.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Cheeca (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Cheeca.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Cheeca.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Sombrero (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Sombrero.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Sombrero.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Newfound Harbor (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_NFH.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_NFH.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Looe (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Looe.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_Looe.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Eastern Dry Rocks (scale 10 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_EDR.png' class='glightbox' data-gallery='mir10'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context10_hab10/MIR_context10_hab10_hab20km_ctx10km_EDR.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+</details>
+<details>
+<summary>
+<strong>MIR — scale 5 km (8 maps)</strong>
+</summary>
+<h4 class="toc-ignore">
+Carysfort North (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Carysfort_North.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Carysfort_North.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Carysfort South (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Carysfort_South.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Carysfort_South.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Horseshoe (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Horseshoe.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Horseshoe.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Cheeca (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Cheeca.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Cheeca.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Sombrero (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Sombrero.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Sombrero.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Newfound Harbor (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_NFH.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_NFH.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Looe (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Looe.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_Looe.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+<h4 class="toc-ignore">
+Eastern Dry Rocks (scale 5 km)
+</h4>
+<a href='docs/Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_EDR.png' class='glightbox' data-gallery='mir5'>
+<img src='Outputs_sfer_habitat_maps/run_SHARE/Figures/MIR_context5_hab10/MIR_context5_hab10_hab10km_ctx5km_EDR.png' style='width:220px; height:auto; border:1px solid #ddd; border-radius:6px; margin:6px 0;'/>
+</a>
+<hr/>
+</details>
+</div>
+<div id="proximity-to-sfer" class="section level2">
+<h2>Proximity to SFER</h2>
+<h3>
+Closest SFER sites to each MIR site
+</h3>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-2900c65492b9cd2cb566" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-2900c65492b9cd2cb566">{"x":{"filter":"top","vertical":false,"filterHTML":"<tr>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none;position: absolute;width: 200px;opacity: 1\">\n      <div data-min=\"1\" data-max=\"4\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none;position: absolute;width: 200px;opacity: 1\">\n      <div data-min=\"1.22\" data-max=\"20.41\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n<\/tr>","caption":"<caption>Use the dropdown to view one MIR site at a time.<\/caption>","data":[["Carysfort North","Carysfort North","Carysfort North","Carysfort North","Carysfort South","Carysfort South","Carysfort South","Carysfort South","Cheeca","Cheeca","Cheeca","Cheeca","EDR","EDR","EDR","EDR","Horseshoe","Horseshoe","Horseshoe","Horseshoe","Looe","Looe","Looe","Looe","NFH","NFH","NFH","NFH","Sombrero","Sombrero","Sombrero","Sombrero"],[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4],["EK_OFF","EK_MID","EK_IN","5.5","EK_OFF","EK_MID","EK_IN","5.5","UK_IN","UK_MID","UK_OFF","7","22","23","22.5","24","5.5","5","6","4","21LK","20","21.5","19","19","20","21LK","21.5","18","17","15","14"],[9.01,10.01,12.43,20.41,10.74,11.61,13.78,18.68,6.31,7.32,8.67,16.8,1.58,3.18,7.27,8.5,7.67,7.89,8.449999999999999,9.220000000000001,1.22,3.57,6.93,7.43,3.86,5.85,9.34,14.92,7.99,8.449999999999999,9.68,10.34]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>MIRSite<\/th>\n      <th>rank<\/th>\n      <th>SFER_SiteID<\/th>\n      <th>dist_km<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":12,"scrollX":true,"initComplete":"function(){\n  var api = this.api();\n  var col = 0; // first column = MIR site\n  var cell = $(api.table().header()).find('tr:eq(1) th').eq(col);\n  cell.empty();\n  var select = $('<select style=\"width: 100%\"><option value=\"\">Select MIR site…<\/option><\/select>')\n    .appendTo(cell)\n    .on('change', function(){\n      var v = $.fn.dataTable.util.escapeRegex($(this).val());\n      api.column(col).search(v ? '^'+v+'$' : '', true, false).draw();\n    });\n  api.column(col).data().unique().sort().each(function(d){\n    select.append('<option value=\"'+d+'\">'+d+'<\/option>');\n  });\n  // default: show the first MIR site only\n  var first = api.column(col).data()[0];\n  if(first !== undefined){ select.val(first).trigger('change'); }\n}","columnDefs":[{"className":"dt-right","targets":[1,3]},{"name":"MIRSite","targets":0},{"name":"rank","targets":1},{"name":"SFER_SiteID","targets":2},{"name":"dist_km","targets":3}],"order":[],"autoWidth":false,"orderClasses":false,"orderCellsTop":true,"lengthMenu":[10,12,25,50,100]}},"evals":["options.initComplete"],"jsHooks":[]}</script>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
