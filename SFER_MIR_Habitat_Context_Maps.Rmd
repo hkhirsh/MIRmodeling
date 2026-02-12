@@ -150,7 +150,9 @@ if (regen_maps) {
 } else {
   # 👇 CHANGE THIS to the run folder that already exists on your machine
   # run_dir <- "Outputs_sfer_habitat_maps/run_20260205_1356"
-    run_dir <- "docs/Outputs_sfer_habitat_maps/run_SHARE"
+    # run_dir <- "docs/Outputs_sfer_habitat_maps/run_SHARE"
+  run_dir <- file.path("Outputs_sfer_habitat_maps", "run_SHARE")
+
 
 
 }
@@ -353,144 +355,162 @@ p_inset_base <- ggplot() +
 
 ## Reference Map
 ```{r reference-map-static, echo=FALSE, results='asis'}
-# ============================
-# Reference Map (STATIC, Keys-only)
-# - ALWAYS regenerates (no caching)
-# - Default ggplot colors by Zone column
-# - SFER labels small + black inside points (no leader lines)
-# - MIR polygons thin black outline
-# - MIR labels allowed to have leader lines + pushed farther away
-# ============================
+# DISPLAY ONLY (no sf / no ggsave) — uses the PNG already in your run folder
+ref_png_fs  <- file.path(run_dir, "Figures", "reference_map_static_keys.png")
+ref_png_web <- to_web(ref_png_fs)
 
-# Output image path (overwrites every knit)
-ref_png <- file.path(run_dir, "Figures", "reference_map_static_keys.png")
-
-# ----------------------------
-# 1) Build Keys-only extent from data (SFER + MIR)
-# ----------------------------
-bb_keys <- sf::st_bbox(sfer_all_ll)
-
-if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) {
-  bb_m <- sf::st_bbox(mir_all_ll)
-  bb_keys["xmin"] <- min(bb_keys["xmin"], bb_m["xmin"])
-  bb_keys["ymin"] <- min(bb_keys["ymin"], bb_m["ymin"])
-  bb_keys["xmax"] <- max(bb_keys["xmax"], bb_m["xmax"])
-  bb_keys["ymax"] <- max(bb_keys["ymax"], bb_m["ymax"])
+if (!file.exists(ref_png_fs)) {
+  cat("<p><b>Reference map not found:</b> ", ref_png_web, "</p>", sep = "")
+} else {
+  cat(sprintf(
+    "<a href='%s' class='glightbox' data-gallery='reference'>
+       <img src='%s' style='width:100%%; max-width:1100px; height:auto;
+            border:1px solid #ddd; border-radius:6px;'/>
+     </a>",
+    ref_png_web, ref_png_web
+  ))
 }
 
-# Pad the bbox a bit so labels have room (simple + stable; no NA bbox math)
-pad_x <- as.numeric(bb_keys["xmax"] - bb_keys["xmin"]) * 0.10
-pad_y <- as.numeric(bb_keys["ymax"] - bb_keys["ymin"]) * 0.15
-bb_keys["xmin"] <- bb_keys["xmin"] - pad_x
-bb_keys["xmax"] <- bb_keys["xmax"] + pad_x
-bb_keys["ymin"] <- bb_keys["ymin"] - pad_y
-bb_keys["ymax"] <- bb_keys["ymax"] + pad_y
 
-# Crop geometry using bbox (robust way)
-bb_sfc <- sf::st_as_sfc(bb_keys)
 
-FLKs_keys <- sf::st_crop(FLKs1_ll, bb_sfc)
-sfer_keys <- sf::st_crop(sfer_all_ll, bb_sfc)
-mir_keys  <- if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) sf::st_crop(mir_all_ll, bb_sfc) else NULL
-
-# ----------------------------
-# 2) MIR label positions (for polygons)
-# ----------------------------
-mir_lab_df <- NULL
-if (!is.null(mir_keys) && nrow(mir_keys) > 0 && "MIRSite" %in% names(mir_keys)) {
-  mir_pts <- sf::st_point_on_surface(mir_keys)
-  mir_lab_df <- sf_points_to_label_df(mir_pts, "MIRSite")
-}
-
-# ----------------------------
-# 3) Plot
-# ----------------------------
-p_ref <- ggplot() +
-
-  # Shoreline
-  geom_sf(
-    data = FLKs_keys,
-    fill = "gray85",
-    color = NA
-  ) +
-
-  # MIR polygons — thin outline
-  { if (!is.null(mir_keys) && nrow(mir_keys) > 0)
-    geom_sf(
-      data = mir_keys,
-      fill = NA,
-      color = "black",
-      linewidth = 0.25,
-      alpha = 0.9
-    )
-    else NULL } +
-
-  # MIR labels — leader lines OK, pushed farther away
-  { if (!is.null(mir_lab_df) && nrow(mir_lab_df) > 0)
-    ggrepel::geom_label_repel(
-      data = mir_lab_df,
-      aes(x = .x, y = .y, label = .lbl),
-      size = 3.2 / ggplot2::.pt,
-      fontface = "bold",
-      label.size = 0,
-      fill = scales::alpha("white", 0.70),
-      box.padding = 0.7,
-      point.padding = 0.6,
-      force = 2.5,
-      min.segment.length = 0,
-      segment.size = 0.25,
-      max.overlaps = Inf
-    )
-    else NULL } +
-
-  # SFER points — default ggplot colors by Zone (no manual palette)
-  geom_sf(
-    data = sfer_keys,
-    aes(fill = .data[[sfer_zone_col]]),
-    shape = 21,
-    color = "white",
-    stroke = 0.6,
-    size = 4.0,
-    alpha = 0.95
-  ) +
-
-  # SFER labels — small, black, inside points (no leader lines)
-  geom_sf_text(
-    data = sfer_keys,
-    aes(label = .data[[sfer_id_col]]),
-    color = "black",
-    size = 1.8,
-    fontface = "plain"
-  ) +
-
-  coord_sf(
-    xlim = c(bb_keys["xmin"], bb_keys["xmax"]),
-    ylim = c(bb_keys["ymin"], bb_keys["ymax"]),
-    expand = FALSE
-  ) +
-
-  theme_bw() +
-  theme(
-    panel.grid = element_blank(),
-    legend.title = element_text(size = 10),
-    legend.text  = element_text(size = 9)
-  ) +
-  labs(
-    fill  = "SFER Zone",
-    title = "SFER stations and MIR sites — Florida Keys"
-  )
-
-# ALWAYS save (overwrite)
-ggsave(ref_png, p_ref, width = 9.5, height = 6.5, dpi = 300)
-
-# Display with click-to-zoom
-cat(sprintf(
-  "<a href='%s' class='glightbox' data-gallery='reference'>
-     <img src='%s' style='width:100%%; max-width:1100px; height:auto;
-          border:1px solid #ddd; border-radius:6px;'/>
-   </a>",
-  ref_png, ref_png
-))
+# # ============================
+# # Reference Map (STATIC, Keys-only)
+# # - ALWAYS regenerates (no caching)
+# # - Default ggplot colors by Zone column
+# # - SFER labels small + black inside points (no leader lines)
+# # - MIR polygons thin black outline
+# # - MIR labels allowed to have leader lines + pushed farther away
+# # ============================
+# 
+# # Output image path (overwrites every knit)
+# ref_png <- file.path(run_dir, "Figures", "reference_map_static_keys.png")
+# 
+# # ----------------------------
+# # 1) Build Keys-only extent from data (SFER + MIR)
+# # ----------------------------
+# bb_keys <- sf::st_bbox(sfer_all_ll)
+# 
+# if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) {
+#   bb_m <- sf::st_bbox(mir_all_ll)
+#   bb_keys["xmin"] <- min(bb_keys["xmin"], bb_m["xmin"])
+#   bb_keys["ymin"] <- min(bb_keys["ymin"], bb_m["ymin"])
+#   bb_keys["xmax"] <- max(bb_keys["xmax"], bb_m["xmax"])
+#   bb_keys["ymax"] <- max(bb_keys["ymax"], bb_m["ymax"])
+# }
+# 
+# # Pad the bbox a bit so labels have room (simple + stable; no NA bbox math)
+# pad_x <- as.numeric(bb_keys["xmax"] - bb_keys["xmin"]) * 0.10
+# pad_y <- as.numeric(bb_keys["ymax"] - bb_keys["ymin"]) * 0.15
+# bb_keys["xmin"] <- bb_keys["xmin"] - pad_x
+# bb_keys["xmax"] <- bb_keys["xmax"] + pad_x
+# bb_keys["ymin"] <- bb_keys["ymin"] - pad_y
+# bb_keys["ymax"] <- bb_keys["ymax"] + pad_y
+# 
+# # Crop geometry using bbox (robust way)
+# bb_sfc <- sf::st_as_sfc(bb_keys)
+# 
+# FLKs_keys <- sf::st_crop(FLKs1_ll, bb_sfc)
+# sfer_keys <- sf::st_crop(sfer_all_ll, bb_sfc)
+# mir_keys  <- if (!is.null(mir_all_ll) && nrow(mir_all_ll) > 0) sf::st_crop(mir_all_ll, bb_sfc) else NULL
+# 
+# # ----------------------------
+# # 2) MIR label positions (for polygons)
+# # ----------------------------
+# mir_lab_df <- NULL
+# if (!is.null(mir_keys) && nrow(mir_keys) > 0 && "MIRSite" %in% names(mir_keys)) {
+#   mir_pts <- sf::st_point_on_surface(mir_keys)
+#   mir_lab_df <- sf_points_to_label_df(mir_pts, "MIRSite")
+# }
+# 
+# # ----------------------------
+# # 3) Plot
+# # ----------------------------
+# p_ref <- ggplot() +
+# 
+#   # Shoreline
+#   geom_sf(
+#     data = FLKs_keys,
+#     fill = "gray85",
+#     color = NA
+#   ) +
+# 
+#   # MIR polygons — thin outline
+#   { if (!is.null(mir_keys) && nrow(mir_keys) > 0)
+#     geom_sf(
+#       data = mir_keys,
+#       fill = NA,
+#       color = "black",
+#       linewidth = 0.25,
+#       alpha = 0.9
+#     )
+#     else NULL } +
+# 
+#   # MIR labels — leader lines OK, pushed farther away
+#   { if (!is.null(mir_lab_df) && nrow(mir_lab_df) > 0)
+#     ggrepel::geom_label_repel(
+#       data = mir_lab_df,
+#       aes(x = .x, y = .y, label = .lbl),
+#       size = 3.2 / ggplot2::.pt,
+#       fontface = "bold",
+#       label.size = 0,
+#       fill = scales::alpha("white", 0.70),
+#       box.padding = 0.7,
+#       point.padding = 0.6,
+#       force = 2.5,
+#       min.segment.length = 0,
+#       segment.size = 0.25,
+#       max.overlaps = Inf
+#     )
+#     else NULL } +
+# 
+#   # SFER points — default ggplot colors by Zone (no manual palette)
+#   geom_sf(
+#     data = sfer_keys,
+#     aes(fill = .data[[sfer_zone_col]]),
+#     shape = 21,
+#     color = "white",
+#     stroke = 0.6,
+#     size = 4.0,
+#     alpha = 0.95
+#   ) +
+# 
+#   # SFER labels — small, black, inside points (no leader lines)
+#   geom_sf_text(
+#     data = sfer_keys,
+#     aes(label = .data[[sfer_id_col]]),
+#     color = "black",
+#     size = 1.8,
+#     fontface = "plain"
+#   ) +
+# 
+#   coord_sf(
+#     xlim = c(bb_keys["xmin"], bb_keys["xmax"]),
+#     ylim = c(bb_keys["ymin"], bb_keys["ymax"]),
+#     expand = FALSE
+#   ) +
+# 
+#   theme_bw() +
+#   theme(
+#     panel.grid = element_blank(),
+#     legend.title = element_text(size = 10),
+#     legend.text  = element_text(size = 9)
+#   ) +
+#   labs(
+#     fill  = "SFER Zone",
+#     title = "SFER stations and MIR sites — Florida Keys"
+#   )
+# 
+# # ALWAYS save (overwrite)
+# ggsave(ref_png, p_ref, width = 9.5, height = 6.5, dpi = 300)
+# 
+# # Display with click-to-zoom
+# cat(sprintf(
+#   "<a href='%s' class='glightbox' data-gallery='reference'>
+#      <img src='%s' style='width:100%%; max-width:1100px; height:auto;
+#           border:1px solid #ddd; border-radius:6px;'/>
+#    </a>",
+#   ref_png, ref_png
+# ))
 
 
 ```
