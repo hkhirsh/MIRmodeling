@@ -158,6 +158,14 @@ if (regen_maps) {
 message("Using run directory: ", normalizePath(run_dir, winslash = "/", mustWork = FALSE))
 ```
 
+
+
+
+```{r github-pages-paths, include=FALSE}
+# Convert filesystem paths under docs/ to web-relative paths for GitHub Pages
+to_web <- function(x) sub("^docs/", "", x)
+```
+
 ```{r styling, include=FALSE}
 # -----------------------------
 # Styling (points, labels, inset)
@@ -873,7 +881,9 @@ render_map_list <- function(subdir, title_fun, gallery_id = "maps", order_vec = 
   }
 
   for (fn in pngs) {
-    rel   <- file.path(subdir, fn)
+    rel_fs  <- file.path(subdir, fn)   # filesystem path
+    rel     <- to_web(rel_fs)          # web path for GitHub Pages
+
     title <- title_fun(fn)
 
     cat(sprintf("<h4 class='toc-ignore'>%s</h4>\n", title))
